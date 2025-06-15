@@ -1,0 +1,18 @@
+meta {
+  name: chatWithMemory
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8000/chat/memory
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "message": "你知道我的名字吗？",
+    "session_id": "default_session"
+  }
+}

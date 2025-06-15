@@ -1,3 +1,4 @@
-langchain-core
-langchain-ollama
-langserve[all]
+langchain-core~=0.3.65
+langchain-community~=0.3.25
+langchain-ollama~=0.3.3
+langserve[all]~=0.3.1

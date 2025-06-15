@@ -11,7 +11,7 @@ def chat_with_ollama(message):
     """
     headers = {"Content-Type": "application/json"}
     data = {"message": message}
-    
+
     try:
         response = requests.post(API_URL, headers=headers, data=json.dumps(data))
         response.raise_for_status()
