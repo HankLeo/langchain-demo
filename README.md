@@ -18,7 +18,11 @@ source .venv/bin/activate
 
 2. 安装Python依赖包：
 ```bash
-pip install langchain-community langchain-core langchain-ollama
+# 方法1：逐个安装
+pip install langchain-core langchain-ollama "langserve[all]"
+
+# 方法2：使用requirements.txt一键安装
+pip install -r requirements.txt
 ```
 
 ## 部署Ollama
