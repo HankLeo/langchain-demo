@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -6,7 +7,7 @@ from langchain_ollama import OllamaLLM
 from pydantic import BaseModel
 
 # 初始化Ollama聊天模型
-llm = OllamaLLM(model="deepseek-r1:14b")
+llm = OllamaLLM(model="qwen3:latest")
 
 # 定义提示模板
 prompt = ChatPromptTemplate.from_messages([
@@ -36,18 +37,20 @@ conversation = RunnableWithMessageHistory(
     history_messages_key="history"
 )
 
-# 交互循环
+# # 控制台交互循环
 # print("Ollama聊天demo (输入'exit'退出)")
 # while True:
 #     user_input = input("你: ")
 #     if user_input.lower() in ['exit', 'quit']:
 #         break
 #
-#     response = conversation.invoke(
-#         {"input": user_input},
-#         config={"configurable": {"session_id": "demo_session"}} # 会话ID
-#     )
-#     print(f"AI: {response}")
+#     print("AI: ", end="", flush=True)
+#     for chunk in conversation.stream(
+#             {"input": user_input},
+#             config={"configurable": {"session_id": "demo_session"}}
+#     ):
+#         print(chunk, end="", flush=True)
+#     print()  # 换行
 
 # 定义FastAPI应用
 app = FastAPI()
@@ -60,15 +63,27 @@ class ChatRequest(BaseModel):
 
 
 @app.post("/chat/memory")
-async def chat_with_memory(request: ChatRequest):
-    try:
-        response = conversation.invoke(
-            {"input": request.message},
-            config={"configurable": {"session_id": request.session_id}}
-        )
-        return {"response": str(response)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def chat_with_memory(request: ChatRequest, req: Request):
+    stream = req.query_params.get("stream", "false").lower() == "true"
+
+    if stream:
+        async def generate():
+            async for chunk in conversation.astream(
+                    {"input": request.message},
+                    config={"configurable": {"session_id": request.session_id}}
+            ):
+                yield f"data: {chunk}\n\n"
+
+        return StreamingResponse(generate(), media_type="text/event-stream")
+    else:
+        try:
+            response = conversation.invoke(
+                {"input": request.message},
+                config={"configurable": {"session_id": request.session_id}}
+            )
+            return {"response": str(response)}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 # 运行应用
