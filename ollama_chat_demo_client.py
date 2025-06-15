@@ -1,7 +1,9 @@
-import requests
 import json
 
+import requests
+
 API_URL = "http://localhost:8000/chat"
+
 
 def chat_with_ollama(message):
     """
@@ -20,13 +22,14 @@ def chat_with_ollama(message):
         print(f"请求出错: {e}")
         return None
 
+
 if __name__ == "__main__":
     print("Ollama聊天客户端 (输入'exit'退出)")
     while True:
         user_input = input("你: ")
         if user_input.lower() == 'exit':
             break
-            
+
         response = chat_with_ollama(user_input)
         if response:
             print(f"AI: {response.get('response')}")

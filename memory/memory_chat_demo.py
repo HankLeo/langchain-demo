@@ -2,12 +2,13 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_ollama import OllamaLLM
+from langchain_ollama import ChatOllama
 from pydantic import BaseModel
 
 # 初始化Ollama聊天模型
-llm = OllamaLLM(model="qwen3:latest")
+llm = ChatOllama(model="qwen3:latest")
 
 # 定义提示模板
 prompt = ChatPromptTemplate.from_messages([
@@ -65,23 +66,25 @@ class ChatRequest(BaseModel):
 @app.post("/chat/memory")
 async def chat_with_memory(request: ChatRequest, req: Request):
     stream = req.query_params.get("stream", "false").lower() == "true"
+    config: RunnableConfig = {"configurable": {"session_id": request.session_id}}
 
     if stream:
         async def generate():
             async for chunk in conversation.astream(
                     {"input": request.message},
-                    config={"configurable": {"session_id": request.session_id}}
+                    config=config
             ):
-                yield f"data: {chunk}\n\n"
+                # yield f"data: {chunk.content}\n\n"
+                yield f"{chunk.content}"
 
         return StreamingResponse(generate(), media_type="text/event-stream")
     else:
         try:
             response = conversation.invoke(
                 {"input": request.message},
-                config={"configurable": {"session_id": request.session_id}}
+                config=config
             )
-            return {"response": str(response)}
+            return {"response": str(response.content)}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
