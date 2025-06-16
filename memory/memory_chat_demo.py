@@ -12,7 +12,7 @@ llm = ChatOllama(model="qwen3:latest")
 
 # 定义提示模板
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "你是乐于助人的AI助手"),
+    ("system", "你是乐于助人的AI助手 /no_think"),
     MessagesPlaceholder(variable_name="history"),  # 历史对话记录
     ("human", "{input}")  # 用户输入
 ])
