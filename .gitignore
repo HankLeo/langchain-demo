@@ -51,3 +51,7 @@ ENV/
 # Ollama models
 *.bin
 *.gguf
+
+# AI IDE
+.lingma
+.trae
